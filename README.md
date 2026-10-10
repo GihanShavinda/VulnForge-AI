@@ -1,4 +1,4 @@
-# VulnForge AI 2.0
+# VulnForge AI 
 
 AI-Powered Vulnerability Assessment, Continuous Exposure, Attack-Path & Remediation Engineering Platform.
 
