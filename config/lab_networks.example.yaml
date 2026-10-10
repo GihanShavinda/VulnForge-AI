@@ -1,0 +1,69 @@
+lab:
+  name: "VulnForge VMware Host-Only Lab"
+  network_type: "host-only"
+  cidr: "192.168.56.0/24"
+  approved_for_scanning: true
+  scanner:
+    hostname: "vulnforge-scanner"
+    ip: "192.168.56.10"
+
+  assets:
+    - hostname: "kali"
+      ip: "192.168.56.11"
+      role: "attacker-toolbox"
+      vulnerable_target: false
+
+    - hostname: "metasploitable2"
+      ip: "192.168.56.20"
+      role: "intentionally-vulnerable-target"
+      vulnerable_target: true
+
+    - hostname: "owasp-target"
+      ip: "192.168.56.21"
+      role: "web-security-target"
+      vulnerable_target: true
+
+    - hostname: "windows-xp"
+      ip: "192.168.56.30"
+      role: "legacy-windows-target"
+      vulnerable_target: true
+
+    - hostname: "windows-7"
+      ip: "192.168.56.31"
+      role: "legacy-windows-target"
+      vulnerable_target: true
+
+    - hostname: "windows-10"
+      ip: "192.168.56.32"
+      role: "windows-target"
+      vulnerable_target: false
+
+    - hostname: "ubuntu-desktop"
+      ip: "192.168.56.40"
+      role: "linux-target"
+      vulnerable_target: false
+
+    - hostname: "ubuntu-cli"
+      ip: "192.168.56.41"
+      role: "linux-server-target"
+      vulnerable_target: false
+
+scan_scope:
+  name: "primary-lab-scope"
+  cidr: "192.168.56.0/24"
+  require_explicit_authorization: true
+  maintenance_window:
+    timezone: "Asia/Colombo"
+    start: "18:00"
+    end: "23:59"
+
+scan_limits:
+  timeout_seconds: 900
+  max_concurrency: 2
+  evidence_retention_days: 90
+
+optional_update_network:
+  enabled: false
+  network_type: "nat"
+  purpose: "Controlled operating-system and package updates only"
+  rule: "Disconnect intentionally vulnerable targets from NAT after updates"

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap" args="nmap -sn 192.168.56.0/24" start="1791536400" startstr="Fri Oct  9 10:20:00 2026" version="7.95" xmloutputversion="1.05">
+  <host>
+    <status state="up" reason="arp-response" reason_ttl="0"/>
+    <address addr="192.168.56.25" addrtype="ipv4"/>
+    <address addr="00:0C:29:AA:BB:CC" addrtype="mac" vendor="VMware"/>
+    <hostnames><hostname name="metasploitable2-renamed.lab" type="PTR"/></hostnames>
+  </host>
+  <host>
+    <status state="up" reason="arp-response" reason_ttl="0"/>
+    <address addr="192.168.56.41" addrtype="ipv4"/>
+    <address addr="00:0C:29:44:55:66" addrtype="mac" vendor="VMware"/>
+    <hostnames><hostname name="ubuntu-cli.lab" type="PTR"/></hostnames>
+  </host>
+</nmaprun>
