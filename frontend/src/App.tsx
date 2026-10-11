@@ -1,9 +1,9 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1",
-  timeout: 15000,
+  timeout: 900000,
 });
 
 type Network = {
@@ -24,9 +24,6 @@ type Asset = {
   role?: string | null;
   scanning_enabled: boolean;
   reachable?: boolean | null;
-  first_seen?: string | null;
-  last_seen?: string | null;
-  last_discovery_source?: string | null;
 };
 type Scope = {
   id: string;
@@ -104,6 +101,60 @@ type DiscoveryEvidence = {
   raw_xml: string;
   captured_at: string;
 };
+type ServiceObservation = {
+  id: string;
+  enumeration_job_id: string;
+  asset_id: string;
+  ip_address: string;
+  port: number;
+  protocol: string;
+  state: string;
+  service?: string | null;
+  product?: string | null;
+  version?: string | null;
+  banner?: string | null;
+  cpe?: string | null;
+  tls_indicator: boolean;
+  scan_confidence?: number | null;
+  detection_source: string;
+  first_seen: string;
+  last_seen: string;
+  change_types?: string | null;
+};
+type ExposureFinding = {
+  id: string;
+  enumeration_job_id: string;
+  service_observation_id?: string | null;
+  asset_id: string;
+  rule_code: string;
+  title: string;
+  category: string;
+  severity: string;
+  conclusion: string;
+  evidence_json: string;
+  created_at: string;
+};
+type EnumerationJob = {
+  id: string;
+  asset_id: string;
+  target: string;
+  protocol: string;
+  top_ports: number;
+  status: string;
+  created_at: string;
+};
+type EnumerationResult = {
+  job: EnumerationJob;
+  services: ServiceObservation[];
+  findings: ExposureFinding[];
+};
+type EnumerationEvidence = {
+  id: string;
+  enumeration_job_id: string;
+  content_sha256: string;
+  raw_xml: string;
+  captured_at: string;
+};
 
 type Tab =
   | "dashboard"
@@ -115,6 +166,8 @@ type Tab =
   | "credentials"
   | "validator"
   | "discovery"
+  | "services"
+  | "exposures"
   | "audit";
 
 function errMessage(e: unknown) {
@@ -181,13 +234,21 @@ export default function App() {
   const [lastDiscovery, setLastDiscovery] = useState<DiscoveryResult | null>(
     null,
   );
-  const [evidence, setEvidence] = useState<DiscoveryEvidence | null>(null);
+  const [discoveryEvidence, setDiscoveryEvidence] =
+    useState<DiscoveryEvidence | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState("");
+  const [serviceRows, setServiceRows] = useState<ServiceObservation[]>([]);
+  const [exposures, setExposures] = useState<ExposureFinding[]>([]);
+  const [lastEnumeration, setLastEnumeration] =
+    useState<EnumerationResult | null>(null);
+  const [enumerationEvidence, setEnumerationEvidence] =
+    useState<EnumerationEvidence | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   async function refresh() {
     try {
-      const [n, a, s, p, t, c, l, d] = await Promise.all([
+      const [n, a, s, p, t, c, l, d, x] = await Promise.all([
         api.get("/security-lab/networks"),
         api.get("/security-lab/assets"),
         api.get("/security-lab/scopes"),
@@ -196,6 +257,7 @@ export default function App() {
         api.get("/security-lab/credential-profiles"),
         api.get("/security-lab/audit-logs?limit=100"),
         api.get("/assets/discovered"),
+        api.get("/exposures?limit=200"),
       ]);
       setNetworks(n.data);
       setAssets(a.data);
@@ -205,6 +267,8 @@ export default function App() {
       setCredentials(c.data);
       setAudit(l.data);
       setDiscovered(d.data);
+      setExposures(x.data);
+      if (!selectedAsset && a.data.length) setSelectedAsset(a.data[0].id);
       setError("");
     } catch (e) {
       setError("Backend unavailable or API mismatch: " + errMessage(e));
@@ -232,7 +296,18 @@ export default function App() {
     }
   }
 
-  const nav: (Tab | string)[] = [
+  async function loadServices(assetId: string) {
+    if (!assetId) return;
+    setSelectedAsset(assetId);
+    try {
+      const r = await api.get(`/assets/${assetId}/services`);
+      setServiceRows(r.data);
+    } catch (e) {
+      setError(errMessage(e));
+    }
+  }
+
+  const nav: Tab[] = [
     "dashboard",
     "networks",
     "assets",
@@ -242,6 +317,8 @@ export default function App() {
     "credentials",
     "validator",
     "discovery",
+    "services",
+    "exposures",
     "audit",
   ];
 
@@ -252,7 +329,7 @@ export default function App() {
           <b>VF</b>
           <div>
             <strong>VulnForge AI</strong>
-            <small>V2 Asset Discovery</small>
+            <small>V3 Attack Surface</small>
           </div>
         </div>
         <nav>
@@ -260,7 +337,7 @@ export default function App() {
             <button
               key={x}
               className={tab === x ? "active" : ""}
-              onClick={() => setTab(x as Tab)}
+              onClick={() => setTab(x)}
             >
               {x.replace("-", " ").replace(/^./, (m) => m.toUpperCase())}
             </button>
@@ -280,9 +357,12 @@ export default function App() {
                 ? "Security Lab Dashboard"
                 : tab.replace(/^./, (m) => m.toUpperCase())}
             </h1>
-            <p>V2 safe network asset discovery with Nmap XML evidence.</p>
+            <p>
+              V1-V3 scope control, asset discovery, service enumeration and
+              evidence-backed exposure engineering.
+            </p>
           </div>
-          <span>V2</span>
+          <span>V3</span>
         </header>
         {error && <div className="alert danger">{error}</div>}
         {message && <div className="alert success">{message}</div>}
@@ -303,24 +383,24 @@ export default function App() {
                 <b>{scopes.filter((x) => x.enabled).length}</b>
               </article>
               <article>
-                <small>Profiles</small>
-                <b>{profiles.length}</b>
-              </article>
-              <article>
-                <small>Denied Validations</small>
-                <b>{audit.filter((x) => x.allowed === false).length}</b>
-              </article>
-              <article>
                 <small>Discovery Observations</small>
                 <b>{discovered.length}</b>
               </article>
+              <article>
+                <small>Service Observations</small>
+                <b>{serviceRows.length}</b>
+              </article>
+              <article>
+                <small>Exposure Findings</small>
+                <b>{exposures.length}</b>
+              </article>
             </section>
             <section className="panel">
-              <h2>V2 discovery flow</h2>
+              <h2>V3 flow</h2>
               <div className="flow">
-                <span>Approved Network</span>→<span>Scan Scope</span>→
-                <span>Nmap Discovery</span>→<span>XML Evidence</span>→
-                <span>Reconciliation</span>→<span>Change Detection</span>
+                <span>Approved Asset</span>→<span>Scope Validation</span>→
+                <span>Nmap Service XML</span>→<span>Service Inventory</span>→
+                <span>Exposure Rules</span>→<span>Change Detection</span>
               </div>
             </section>
           </>
@@ -351,15 +431,11 @@ export default function App() {
               >
                 <label>
                   Name
-                  <input
-                    name="name"
-                    required
-                    placeholder="VulnForge VMware Lab"
-                  />
+                  <input name="name" required />
                 </label>
                 <label>
                   CIDR
-                  <input name="cidr" required defaultValue="192.168.56.0/24" />
+                  <input name="cidr" required defaultValue="192.168.37.0/24" />
                 </label>
                 <label>
                   Type
@@ -436,11 +512,7 @@ export default function App() {
                 </label>
                 <label>
                   IP address
-                  <input
-                    name="ip_address"
-                    required
-                    placeholder="192.168.56.20"
-                  />
+                  <input name="ip_address" required />
                 </label>
                 <label>
                   OS
@@ -511,7 +583,7 @@ export default function App() {
               >
                 <label>
                   Name
-                  <input name="name" required placeholder="Primary Lab Scope" />
+                  <input name="name" required />
                 </label>
                 <label>
                   Network
@@ -526,7 +598,7 @@ export default function App() {
                 </label>
                 <label>
                   CIDR
-                  <input name="cidr" defaultValue="192.168.56.0/24" required />
+                  <input name="cidr" defaultValue="192.168.37.0/24" required />
                 </label>
                 <label>
                   Timezone
@@ -607,8 +679,6 @@ export default function App() {
                   Scanner
                   <select name="scanner">
                     <option>nmap</option>
-                    <option>nuclei</option>
-                    <option>openvas</option>
                   </select>
                 </label>
                 <label>
@@ -676,7 +746,7 @@ export default function App() {
               >
                 <label>
                   Name
-                  <input name="name" required placeholder="legacy-os" />
+                  <input name="name" required />
                 </label>
                 <label className="wide">
                   Description
@@ -740,11 +810,7 @@ export default function App() {
                 </label>
                 <label>
                   Secret reference
-                  <input
-                    name="secret_reference"
-                    required
-                    placeholder="windows-credential-manager:vulnforge/lab-ssh"
-                  />
+                  <input name="secret_reference" required />
                 </label>
                 <label className="check">
                   <input type="checkbox" name="enabled" defaultChecked />{" "}
@@ -802,7 +868,7 @@ export default function App() {
               >
                 <label>
                   Literal IP
-                  <input name="target" required placeholder="192.168.56.20" />
+                  <input name="target" required placeholder="192.168.37.20" />
                 </label>
                 <label className="check">
                   <input type="checkbox" name="auth" /> Explicitly authorized
@@ -833,11 +899,6 @@ export default function App() {
           <>
             <section className="panel">
               <h2>Run Nmap discovery</h2>
-              <p className="hint">
-                The backend validates the entire IP/CIDR against an approved
-                ScanScope before Nmap starts. Use only your authorized VMware
-                lab range.
-              </p>
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
@@ -845,17 +906,13 @@ export default function App() {
                     d = new FormData(f);
                   setError("");
                   setMessage("");
-                  setEvidence(null);
+                  setDiscoveryEvidence(null);
                   try {
-                    const r = await api.post(
-                      "/scans/discovery",
-                      {
-                        target: d.get("target"),
-                        discovery_method: d.get("method"),
-                        explicitly_authorized: d.get("auth") === "on",
-                      },
-                      { timeout: 360000 },
-                    );
+                    const r = await api.post("/scans/discovery", {
+                      target: d.get("target"),
+                      method: d.get("method"),
+                      explicitly_authorized: d.get("auth") === "on",
+                    });
                     setLastDiscovery(r.data);
                     setMessage(
                       `Discovery completed: ${r.data.hosts.length} observations.`,
@@ -871,16 +928,14 @@ export default function App() {
                   <input
                     name="target"
                     required
-                    defaultValue="192.168.56.0/24"
+                    defaultValue="192.168.37.0/24"
                   />
                 </label>
                 <label>
                   Discovery method
                   <select name="method" defaultValue="arp">
                     <option value="icmp">ICMP</option>
-                    <option value="arp">
-                      ARP (best for local Host-Only LAN)
-                    </option>
+                    <option value="arp">ARP</option>
                     <option value="tcp">TCP probes</option>
                   </select>
                 </label>
@@ -892,18 +947,12 @@ export default function App() {
             </section>
             {lastDiscovery && (
               <section className="panel">
-                <h2>Latest job</h2>
+                <h2>Latest discovery job</h2>
                 <p>
                   <b>ID:</b> {lastDiscovery.job.id}
                 </p>
                 <p>
-                  <b>Target:</b> {lastDiscovery.job.target}
-                </p>
-                <p>
                   <b>Method:</b> {lastDiscovery.job.discovery_method}
-                </p>
-                <p>
-                  <b>Status:</b> {lastDiscovery.job.status}
                 </p>
                 <button
                   onClick={async () => {
@@ -911,7 +960,7 @@ export default function App() {
                       const r = await api.get(
                         `/scans/${lastDiscovery.job.id}/evidence`,
                       );
-                      setEvidence(r.data);
+                      setDiscoveryEvidence(r.data);
                     } catch (x) {
                       setError(errMessage(x));
                     }
@@ -921,23 +970,23 @@ export default function App() {
                 </button>
               </section>
             )}
-            {evidence && (
+            {discoveryEvidence && (
               <section className="panel">
-                <h2>Raw Nmap XML evidence</h2>
-                <p className="hint">SHA-256: {evidence.content_sha256}</p>
-                <pre className="evidence">{evidence.raw_xml}</pre>
+                <h2>Discovery XML evidence</h2>
+                <p className="hint">
+                  SHA-256: {discoveryEvidence.content_sha256}
+                </p>
+                <pre className="evidence">{discoveryEvidence.raw_xml}</pre>
               </section>
             )}
             <section className="panel">
-              <h2>Discovered hosts and change signals</h2>
-              <button onClick={refresh}>Refresh</button>
+              <h2>Discovered hosts</h2>
               <Table
                 headers={[
                   "Scan Time",
                   "IP",
                   "Hostname",
                   "MAC",
-                  "Vendor",
                   "State",
                   "Identity",
                   "Changes",
@@ -947,7 +996,6 @@ export default function App() {
                   x.ip_address,
                   x.hostname ?? "—",
                   x.mac_address ?? "—",
-                  x.vendor ?? "—",
                   x.state,
                   x.identity_basis ?? "—",
                   x.change_types ?? "—",
@@ -955,6 +1003,182 @@ export default function App() {
               />
             </section>
           </>
+        )}
+
+        {tab === "services" && (
+          <>
+            <section className="panel">
+              <h2>Run service / attack-surface enumeration</h2>
+              <p className="hint">
+                Select a managed Asset. VulnForge validates its IP against the
+                approved ScanScope before Nmap runs. An open port is an exposure
+                observation, not automatically a vulnerability.
+              </p>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const f = e.currentTarget,
+                    d = new FormData(f);
+                  setError("");
+                  setMessage("");
+                  setEnumerationEvidence(null);
+                  try {
+                    const assetId = String(d.get("asset_id"));
+                    const r = await api.post("/scans/services", {
+                      asset_id: assetId,
+                      protocol: d.get("protocol"),
+                      top_ports: Number(d.get("top_ports")),
+                      explicitly_authorized: d.get("auth") === "on",
+                    });
+                    setLastEnumeration(r.data);
+                    setServiceRows(r.data.services);
+                    setMessage(
+                      `Enumeration completed: ${r.data.services.length} service observations and ${r.data.findings.length} exposure findings.`,
+                    );
+                    await refresh();
+                  } catch (x) {
+                    setError(errMessage(x));
+                  }
+                }}
+              >
+                <label>
+                  Asset
+                  <select
+                    name="asset_id"
+                    required
+                    value={selectedAsset}
+                    onChange={(e) => {
+                      setSelectedAsset(e.target.value);
+                      loadServices(e.target.value);
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {assets
+                      .filter((a) => a.scanning_enabled)
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.hostname} — {a.ip_address}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label>
+                  Protocol
+                  <select name="protocol" defaultValue="tcp">
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                  </select>
+                </label>
+                <label>
+                  Top ports
+                  <input
+                    name="top_ports"
+                    type="number"
+                    min="1"
+                    max="2000"
+                    defaultValue="1000"
+                  />
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="auth" /> Explicitly authorized
+                </label>
+                <button>Run Service Enumeration</button>
+              </form>
+            </section>
+            {lastEnumeration && (
+              <section className="panel">
+                <h2>Latest enumeration job</h2>
+                <p>
+                  <b>ID:</b> {lastEnumeration.job.id}
+                </p>
+                <p>
+                  <b>Target:</b> {lastEnumeration.job.target}
+                </p>
+                <p>
+                  <b>Protocol:</b> {lastEnumeration.job.protocol}
+                </p>
+                <p>
+                  <b>Status:</b> {lastEnumeration.job.status}
+                </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      const r = await api.get(
+                        `/scans/services/${lastEnumeration.job.id}/evidence`,
+                      );
+                      setEnumerationEvidence(r.data);
+                    } catch (x) {
+                      setError(errMessage(x));
+                    }
+                  }}
+                >
+                  Load Raw XML Evidence
+                </button>
+              </section>
+            )}
+            {enumerationEvidence && (
+              <section className="panel">
+                <h2>Service XML evidence</h2>
+                <p className="hint">
+                  SHA-256: {enumerationEvidence.content_sha256}
+                </p>
+                <pre className="evidence">{enumerationEvidence.raw_xml}</pre>
+              </section>
+            )}
+            <section className="panel">
+              <h2>Service observations</h2>
+              <button onClick={() => loadServices(selectedAsset)}>
+                Refresh selected asset
+              </button>
+              <Table
+                headers={[
+                  "Port",
+                  "Proto",
+                  "State",
+                  "Service",
+                  "Product",
+                  "Version",
+                  "TLS",
+                  "Confidence",
+                  "Source",
+                  "Changes",
+                ]}
+                rows={serviceRows.map((x) => [
+                  x.port,
+                  x.protocol,
+                  x.state,
+                  x.service ?? "—",
+                  x.product ?? "—",
+                  x.version ?? "—",
+                  x.tls_indicator ? "Yes" : "No",
+                  x.scan_confidence ?? "—",
+                  x.detection_source,
+                  x.change_types ?? "—",
+                ])}
+              />
+            </section>
+          </>
+        )}
+
+        {tab === "exposures" && (
+          <section className="panel">
+            <h2>Evidence-backed exposure findings</h2>
+            <p className="hint">
+              These are attack-surface observations and rule conclusions. They
+              are not automatic vulnerability labels.
+            </p>
+            <button onClick={refresh}>Refresh</button>
+            <Table
+              headers={["Time", "Severity", "Rule", "Title", "Conclusion"]}
+              rows={exposures.map((x) => [
+                new Date(x.created_at).toLocaleString(),
+                x.severity,
+                x.rule_code,
+                x.title,
+                x.conclusion,
+              ])}
+            />
+          </section>
         )}
 
         {tab === "audit" && (

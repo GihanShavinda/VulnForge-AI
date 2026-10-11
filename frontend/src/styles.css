@@ -271,3 +271,14 @@ th {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.78rem;
 }
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #2a3a47;
+  font-size: 12px;
+}
+.muted {
+  color: #8fa4b4;
+}

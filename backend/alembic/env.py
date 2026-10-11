@@ -6,6 +6,12 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.db.base import Base
 from app.models.discovery import DiscoveryEvidence, DiscoveryJob, DiscoveredHost  # noqa: F401,E402
+from app.models.enumeration import (  # noqa: F401,E402
+    EnumerationEvidence,
+    EnumerationJob,
+    ExposureFinding,
+    ServiceObservation,
+)
 from app.models.security_lab import (  # noqa: F401,E402
     Asset,
     AssetTag,

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap" start="1791648000" version="7.80">
+  <host>
+    <status state="up" reason="user-set"/>
+    <address addr="192.168.37.129" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="21">
+        <state state="open" reason="syn-ack"/>
+        <service name="ftp" product="vsftpd" version="2.3.4" conf="10">
+          <cpe>cpe:/a:vsftpd:vsftpd:2.3.4</cpe>
+        </service>
+        <script id="ftp-anon" output="Anonymous FTP login allowed (FTP code 230)"/>
+        <script id="banner" output="220 (vsFTPd 2.3.4)"/>
+      </port>
+      <port protocol="tcp" portid="23">
+        <state state="open" reason="syn-ack"/>
+        <service name="telnet" product="Linux telnetd" conf="10"/>
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack"/>
+        <service name="microsoft-ds" product="Samba smbd" version="3.X" conf="10"/>
+        <script id="smb-protocols" output="dialects: NT LM 0.12 (SMBv1) [dangerous, but default]"/>
+      </port>
+      <port protocol="tcp" portid="3389">
+        <state state="open" reason="syn-ack"/>
+        <service name="ms-wbt-server" product="Microsoft Terminal Services" conf="10"/>
+      </port>
+      <port protocol="tcp" portid="5432">
+        <state state="open" reason="syn-ack"/>
+        <service name="postgresql" product="PostgreSQL DB" version="14.1" conf="9"/>
+      </port>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack"/>
+        <service name="https" product="nginx" version="1.24.0" tunnel="ssl" conf="10"/>
+      </port>
+    </ports>
+  </host>
+  <runstats><finished time="1791648004" exit="success"/></runstats>
+</nmaprun>
