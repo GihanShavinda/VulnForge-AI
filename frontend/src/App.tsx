@@ -155,6 +155,49 @@ type EnumerationEvidence = {
   raw_xml: string;
   captured_at: string;
 };
+type FingerprintJob = {
+  id: string;
+  asset_id: string;
+  target: string;
+  status: string;
+  warning_message?: string | null;
+  created_at: string;
+};
+type TechnologyObservation = {
+  id: string;
+  fingerprint_job_id: string;
+  asset_id: string;
+  technology_id: string;
+  observed_name: string;
+  observed_version?: string | null;
+  confidence: string;
+  conflict_state: string;
+  is_preferred: boolean;
+  is_legacy?: boolean | null;
+  lifecycle_note?: string | null;
+  evidence_summary_json: string;
+  first_seen: string;
+  last_seen: string;
+};
+type FingerprintEvidence = {
+  id: string;
+  fingerprint_job_id: string;
+  technology_observation_id?: string | null;
+  asset_id: string;
+  source_type: string;
+  source_locator?: string | null;
+  observed_value: string;
+  version_evidence?: string | null;
+  confidence: string;
+  raw_evidence: string;
+  content_sha256: string;
+  captured_at: string;
+};
+type FingerprintResult = {
+  job: FingerprintJob;
+  observations: TechnologyObservation[];
+  evidence_count: number;
+};
 
 type Tab =
   | "dashboard"
@@ -168,6 +211,7 @@ type Tab =
   | "discovery"
   | "services"
   | "exposures"
+  | "fingerprinting"
   | "audit";
 
 function errMessage(e: unknown) {
@@ -243,6 +287,12 @@ export default function App() {
     useState<EnumerationResult | null>(null);
   const [enumerationEvidence, setEnumerationEvidence] =
     useState<EnumerationEvidence | null>(null);
+  const [fingerprints, setFingerprints] = useState<TechnologyObservation[]>([]);
+  const [lastFingerprint, setLastFingerprint] =
+    useState<FingerprintResult | null>(null);
+  const [fingerprintEvidence, setFingerprintEvidence] = useState<
+    FingerprintEvidence[]
+  >([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -307,6 +357,17 @@ export default function App() {
     }
   }
 
+  async function loadFingerprints(assetId: string) {
+    if (!assetId) return;
+    setSelectedAsset(assetId);
+    try {
+      const r = await api.get(`/assets/${assetId}/technologies`);
+      setFingerprints(r.data);
+    } catch (e) {
+      setError(errMessage(e));
+    }
+  }
+
   const nav: Tab[] = [
     "dashboard",
     "networks",
@@ -319,6 +380,7 @@ export default function App() {
     "discovery",
     "services",
     "exposures",
+    "fingerprinting",
     "audit",
   ];
 
@@ -329,7 +391,7 @@ export default function App() {
           <b>VF</b>
           <div>
             <strong>VulnForge AI</strong>
-            <small>V3 Attack Surface</small>
+            <small>V4 Fingerprinting</small>
           </div>
         </div>
         <nav>
@@ -358,11 +420,11 @@ export default function App() {
                 : tab.replace(/^./, (m) => m.toUpperCase())}
             </h1>
             <p>
-              V1-V3 scope control, asset discovery, service enumeration and
-              evidence-backed exposure engineering.
+              V1-V4 scope control, asset discovery, service enumeration and
+              evidence-backed OS/technology fingerprinting.
             </p>
           </div>
-          <span>V3</span>
+          <span>V4</span>
         </header>
         {error && <div className="alert danger">{error}</div>}
         {message && <div className="alert success">{message}</div>}
@@ -396,11 +458,12 @@ export default function App() {
               </article>
             </section>
             <section className="panel">
-              <h2>V3 flow</h2>
+              <h2>V4 flow</h2>
               <div className="flow">
                 <span>Approved Asset</span>→<span>Scope Validation</span>→
-                <span>Nmap Service XML</span>→<span>Service Inventory</span>→
-                <span>Exposure Rules</span>→<span>Change Detection</span>
+                <span>Nmap OS + V3 Services</span>→
+                <span>HTTP / WhatWeb / Inventory</span>→
+                <span>Evidence Fusion</span>→<span>Confidence + Conflicts</span>
               </div>
             </section>
           </>
@@ -1179,6 +1242,169 @@ export default function App() {
               ])}
             />
           </section>
+        )}
+
+        {tab === "fingerprinting" && (
+          <>
+            <section className="panel">
+              <h2>OS & technology fingerprinting</h2>
+              <p className="hint">
+                Combines Nmap OS detection, V3 service evidence, HTTP headers,
+                optional WhatWeb results, and optional authenticated inventory.
+                Exact versions are shown only when evidence explicitly supports
+                them.
+              </p>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const f = e.currentTarget,
+                    d = new FormData(f);
+                  setError("");
+                  setMessage("");
+                  setFingerprintEvidence([]);
+                  try {
+                    const assetId = String(d.get("asset_id"));
+                    const r = await api.post("/fingerprints", {
+                      asset_id: assetId,
+                      explicitly_authorized: d.get("auth") === "on",
+                      run_nmap_os: d.get("nmap_os") === "on",
+                      run_whatweb: d.get("whatweb") === "on",
+                      collect_http_headers: d.get("http_headers") === "on",
+                      authenticated_inventory: [],
+                    });
+                    setLastFingerprint(r.data);
+                    setFingerprints(r.data.observations);
+                    setMessage(
+                      `Fingerprinting finished: ${r.data.observations.length} observations, ${r.data.evidence_count} evidence records.`,
+                    );
+                    await refresh();
+                  } catch (x) {
+                    setError(errMessage(x));
+                  }
+                }}
+              >
+                <label>
+                  Asset
+                  <select
+                    name="asset_id"
+                    required
+                    value={selectedAsset}
+                    onChange={(e) => {
+                      setSelectedAsset(e.target.value);
+                      loadFingerprints(e.target.value);
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {assets
+                      .filter((a) => a.scanning_enabled)
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.hostname} — {a.ip_address}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="auth" /> Explicitly authorized
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="nmap_os" defaultChecked /> Nmap
+                  OS detection
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="http_headers" defaultChecked />{" "}
+                  HTTP headers
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="whatweb" defaultChecked />{" "}
+                  WhatWeb if available
+                </label>
+                <button>Run Fingerprinting</button>
+              </form>
+            </section>
+            {lastFingerprint && (
+              <section className="panel">
+                <h2>Latest fingerprint job</h2>
+                <p>
+                  <b>ID:</b> {lastFingerprint.job.id}
+                </p>
+                <p>
+                  <b>Status:</b> {lastFingerprint.job.status}
+                </p>
+                <p>
+                  <b>Target:</b> {lastFingerprint.job.target}
+                </p>
+                {lastFingerprint.job.warning_message && (
+                  <p className="warning-text">
+                    <b>Warnings:</b> {lastFingerprint.job.warning_message}
+                  </p>
+                )}
+                <button
+                  onClick={async () => {
+                    try {
+                      const r = await api.get(
+                        `/fingerprints/${lastFingerprint.job.id}/evidence`,
+                      );
+                      setFingerprintEvidence(r.data);
+                    } catch (x) {
+                      setError(errMessage(x));
+                    }
+                  }}
+                >
+                  Load Fingerprint Evidence
+                </button>
+              </section>
+            )}
+            <section className="panel">
+              <h2>Technology observations</h2>
+              <button onClick={() => loadFingerprints(selectedAsset)}>
+                Refresh selected asset
+              </button>
+              <Table
+                headers={[
+                  "Name",
+                  "Version",
+                  "Confidence",
+                  "Conflict",
+                  "Preferred",
+                  "Legacy",
+                  "Lifecycle note",
+                ]}
+                rows={fingerprints.map((x) => [
+                  x.observed_name,
+                  x.observed_version ?? "—",
+                  x.confidence,
+                  x.conflict_state,
+                  x.is_preferred ? "Yes" : "No",
+                  x.is_legacy == null ? "Unknown" : x.is_legacy ? "Yes" : "No",
+                  x.lifecycle_note ?? "—",
+                ])}
+              />
+            </section>
+            {fingerprintEvidence.length > 0 && (
+              <section className="panel">
+                <h2>Fingerprint evidence</h2>
+                <Table
+                  headers={[
+                    "Source",
+                    "Locator",
+                    "Observed value",
+                    "Version evidence",
+                    "Confidence",
+                    "SHA-256",
+                  ]}
+                  rows={fingerprintEvidence.map((x) => [
+                    x.source_type,
+                    x.source_locator ?? "—",
+                    x.observed_value,
+                    x.version_evidence ?? "—",
+                    x.confidence,
+                    x.content_sha256,
+                  ])}
+                />
+              </section>
+            )}
+          </>
         )}
 
         {tab === "audit" && (

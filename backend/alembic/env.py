@@ -6,21 +6,9 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.db.base import Base
 from app.models.discovery import DiscoveryEvidence, DiscoveryJob, DiscoveredHost  # noqa: F401,E402
-from app.models.enumeration import (  # noqa: F401,E402
-    EnumerationEvidence,
-    EnumerationJob,
-    ExposureFinding,
-    ServiceObservation,
-)
-from app.models.security_lab import (  # noqa: F401,E402
-    Asset,
-    AssetTag,
-    AuditLog,
-    CredentialProfile,
-    Network,
-    ScanProfile,
-    ScanScope,
-)
+from app.models.enumeration import EnumerationEvidence, EnumerationJob, ExposureFinding, ServiceObservation  # noqa: F401,E402
+from app.models.fingerprinting import FingerprintEvidence, FingerprintJob, Technology, TechnologyObservation  # noqa: F401,E402
+from app.models.security_lab import Asset, AssetTag, AuditLog, CredentialProfile, Network, ScanProfile, ScanScope  # noqa: F401,E402
 
 config = context.config
 if config.config_file_name is not None:
@@ -32,23 +20,13 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    context.configure(
-        url=config.get_main_option("sqlalchemy.url"),
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-        compare_type=True,
-    )
+    context.configure(url=config.get_main_option("sqlalchemy.url"), target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle": "named"}, compare_type=True)
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = engine_from_config(config.get_section(config.config_ini_section, {}), prefix="sqlalchemy.", poolclass=pool.NullPool)
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
         with context.begin_transaction():

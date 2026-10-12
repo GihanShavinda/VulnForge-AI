@@ -282,3 +282,8 @@ th {
 .muted {
   color: #8fa4b4;
 }
+
+.warning-text {
+  color: #fbbf24;
+  white-space: pre-wrap;
+}

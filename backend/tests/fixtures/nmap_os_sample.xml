@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap" start="1791723600">
+  <host>
+    <status state="up"/>
+    <address addr="192.168.37.131" addrtype="ipv4"/>
+    <os>
+      <osmatch name="Microsoft Windows 7 SP1" accuracy="100">
+        <osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="7" accuracy="100"/>
+      </osmatch>
+    </os>
+  </host>
+</nmaprun>
