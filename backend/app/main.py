@@ -10,6 +10,7 @@ from app.api.v1.routes.sbom import router as sbom_router
 from app.api.v1.routes.security_lab import router as security_lab_router
 from app.api.v1.routes.severity_analysis import router as severity_analysis_router
 from app.api.v1.routes.threat_intel import router as threat_intel_router
+from app.api.v1.routes.tls_assessment import router as tls_assessment_router
 from app.api.v1.routes.weakness_context import router as weakness_context_router
 from app.api.v1.routes.web_assessment import router as web_assessment_router
 from app.core.config import get_settings
@@ -18,7 +19,7 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.11.0",
+    version="0.12.0",
     debug=settings.debug,
 )
 
@@ -41,6 +42,7 @@ app.include_router(weakness_context_router, prefix="/api/v1")
 app.include_router(severity_analysis_router, prefix="/api/v1")
 app.include_router(config_assessment_router, prefix="/api/v1")
 app.include_router(web_assessment_router, prefix="/api/v1")
+app.include_router(tls_assessment_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -48,5 +50,5 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
-        "milestone": "V11",
+        "milestone": "V12",
     }
