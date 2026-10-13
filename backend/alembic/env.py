@@ -12,6 +12,7 @@ from app.models.fingerprinting import FingerprintEvidence, FingerprintJob, Techn
 from app.models.sbom import ComponentDriftEvent, PackageComponent, PackageVulnerabilityMatch, SbomImport, VulnerabilityAdvisory  # noqa: F401,E402
 from app.models.security_lab import Asset, AssetTag, AuditLog, CredentialProfile, Network, ScanProfile, ScanScope  # noqa: F401,E402
 from app.models.threat_intel import IntelConflict, IntelSyncRun, ThreatIntelObservation, ThreatIntelSource  # noqa: F401,E402
+from app.models.weakness_context import AttackTechnique, BehaviourObservation, WeaknessCapecMapping, WeaknessTechniqueMapping  # noqa: F401,E402
 
 config = context.config
 if config.config_file_name is not None:

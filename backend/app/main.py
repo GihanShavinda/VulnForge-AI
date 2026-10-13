@@ -8,13 +8,14 @@ from app.api.v1.routes.fingerprinting import router as fingerprinting_router
 from app.api.v1.routes.sbom import router as sbom_router
 from app.api.v1.routes.security_lab import router as security_lab_router
 from app.api.v1.routes.threat_intel import router as threat_intel_router
+from app.api.v1.routes.weakness_context import router as weakness_context_router
 from app.core.config import get_settings
 
 settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.7.0",
+    version="0.8.0",
     debug=settings.debug,
 )
 
@@ -33,6 +34,7 @@ app.include_router(fingerprinting_router, prefix="/api/v1")
 app.include_router(authenticated_assessment_router, prefix="/api/v1")
 app.include_router(sbom_router, prefix="/api/v1")
 app.include_router(threat_intel_router, prefix="/api/v1")
+app.include_router(weakness_context_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -40,5 +42,5 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
-        "milestone": "V7",
+        "milestone": "V8",
     }
