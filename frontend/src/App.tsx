@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import AuthenticatedAssessmentPanel from "./components/AuthenticatedAssessmentPanel";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1",
@@ -212,6 +213,7 @@ type Tab =
   | "services"
   | "exposures"
   | "fingerprinting"
+  | "authenticated"
   | "audit";
 
 function errMessage(e: unknown) {
@@ -381,6 +383,7 @@ export default function App() {
     "services",
     "exposures",
     "fingerprinting",
+    "authenticated",
     "audit",
   ];
 
@@ -391,7 +394,7 @@ export default function App() {
           <b>VF</b>
           <div>
             <strong>VulnForge AI</strong>
-            <small>V4 Fingerprinting</small>
+            <small>V5 Authenticated Assessment</small>
           </div>
         </div>
         <nav>
@@ -424,7 +427,7 @@ export default function App() {
               evidence-backed OS/technology fingerprinting.
             </p>
           </div>
-          <span>V4</span>
+          <span>V5</span>
         </header>
         {error && <div className="alert danger">{error}</div>}
         {message && <div className="alert success">{message}</div>}
@@ -1405,6 +1408,10 @@ export default function App() {
               </section>
             )}
           </>
+        )}
+
+        {tab === "authenticated" && (
+          <AuthenticatedAssessmentPanel assets={assets} />
         )}
 
         {tab === "audit" && (

@@ -287,3 +287,8 @@ th {
   color: #fbbf24;
   white-space: pre-wrap;
 }
+.wrap-cell {
+  white-space: pre-wrap;
+  min-width: 320px;
+  max-width: 720px;
+}

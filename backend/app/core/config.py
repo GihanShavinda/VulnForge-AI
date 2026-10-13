@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     scanner_hostname: str = "vulnforge-scanner"
     scanner_ip: str = "192.168.56.10"
 
-    # V2 — Nmap discovery configuration
     nmap_path: str = r"C:\Program Files (x86)\Nmap\nmap.exe"
 
     default_scan_timeout_seconds: int = Field(
@@ -36,11 +35,13 @@ class Settings(BaseSettings):
         ge=5,
         le=86400,
     )
+
     default_scan_concurrency: int = Field(
         default=2,
         ge=1,
         le=32,
     )
+
     default_evidence_retention_days: int = Field(
         default=90,
         ge=1,
@@ -48,6 +49,12 @@ class Settings(BaseSettings):
     )
 
     cors_origins: str = "http://localhost:5173"
+
+    # V5 — credential encryption
+    credential_encryption_key: str = Field(
+        default="",
+        validation_alias="VULNFORGE_CREDENTIAL_KEY",
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:
