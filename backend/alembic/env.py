@@ -15,6 +15,7 @@ from app.models.security_lab import Asset, AssetTag, AuditLog, CredentialProfile
 from app.models.severity_analysis import VulnerabilitySeverityAnalysis  # noqa: F401,E402
 from app.models.threat_intel import IntelConflict, IntelSyncRun, ThreatIntelObservation, ThreatIntelSource  # noqa: F401,E402
 from app.models.weakness_context import AttackTechnique, BehaviourObservation, WeaknessCapecMapping, WeaknessTechniqueMapping  # noqa: F401,E402
+from app.models.web_assessment import WebAssessmentImport, WebEvidence, WebFinding  # noqa: F401,E402
 
 config = context.config
 if config.config_file_name is not None:
