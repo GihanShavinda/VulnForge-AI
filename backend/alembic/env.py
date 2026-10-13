@@ -12,9 +12,10 @@ from app.models.enumeration import EnumerationEvidence, EnumerationJob, Exposure
 from app.models.fingerprinting import FingerprintEvidence, FingerprintJob, Technology, TechnologyObservation  # noqa: F401,E402
 from app.models.sbom import ComponentDriftEvent, PackageComponent, PackageVulnerabilityMatch, SbomImport, VulnerabilityAdvisory  # noqa: F401,E402
 from app.models.security_lab import Asset, AssetTag, AuditLog, CredentialProfile, Network, ScanProfile, ScanScope  # noqa: F401,E402
+from app.models.secret_exposure import SecretAttackPathSignal, SecretExposure, SecretScanImport  # noqa: F401,E402
 from app.models.severity_analysis import VulnerabilitySeverityAnalysis  # noqa: F401,E402
 from app.models.threat_intel import IntelConflict, IntelSyncRun, ThreatIntelObservation, ThreatIntelSource  # noqa: F401,E402
-from app.models.tls_assessment import TLSAssessmentImport, TLSEvidence, CryptoFinding  # noqa: F401,E402
+from app.models.tls_assessment import CryptoFinding, TLSAssessmentImport, TLSEvidence  # noqa: F401,E402
 from app.models.weakness_context import AttackTechnique, BehaviourObservation, WeaknessCapecMapping, WeaknessTechniqueMapping  # noqa: F401,E402
 from app.models.web_assessment import WebAssessmentImport, WebEvidence, WebFinding  # noqa: F401,E402
 
@@ -46,7 +47,11 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+        )
         with context.begin_transaction():
             context.run_migrations()
 
