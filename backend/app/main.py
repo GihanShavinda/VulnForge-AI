@@ -7,17 +7,14 @@ from app.api.v1.routes.enumeration import router as enumeration_router
 from app.api.v1.routes.fingerprinting import router as fingerprinting_router
 from app.api.v1.routes.sbom import router as sbom_router
 from app.api.v1.routes.security_lab import router as security_lab_router
+from app.api.v1.routes.severity_analysis import router as severity_analysis_router
 from app.api.v1.routes.threat_intel import router as threat_intel_router
 from app.api.v1.routes.weakness_context import router as weakness_context_router
 from app.core.config import get_settings
 
 settings = get_settings()
 
-app = FastAPI(
-    title=settings.app_name,
-    version="0.8.0",
-    debug=settings.debug,
-)
+app = FastAPI(title=settings.app_name, version="0.9.0", debug=settings.debug)
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,12 +32,9 @@ app.include_router(authenticated_assessment_router, prefix="/api/v1")
 app.include_router(sbom_router, prefix="/api/v1")
 app.include_router(threat_intel_router, prefix="/api/v1")
 app.include_router(weakness_context_router, prefix="/api/v1")
+app.include_router(severity_analysis_router, prefix="/api/v1")
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {
-        "status": "ok",
-        "service": settings.app_name,
-        "milestone": "V8",
-    }
+    return {"status": "ok", "service": settings.app_name, "milestone": "V9"}
