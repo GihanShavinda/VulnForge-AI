@@ -10,6 +10,7 @@ from app.models.config_assessment import BenchmarkProfile, ConfigAssessmentRun, 
 from app.models.discovery import DiscoveryEvidence, DiscoveryJob, DiscoveredHost  # noqa: F401,E402
 from app.models.enumeration import EnumerationEvidence, EnumerationJob, ExposureFinding, ServiceObservation  # noqa: F401,E402
 from app.models.fingerprinting import FingerprintEvidence, FingerprintJob, Technology, TechnologyObservation  # noqa: F401,E402
+from app.models.patch_lifecycle import LifecycleFinding, PatchFinding, PatchLifecycleAssessmentRun  # noqa: F401,E402
 from app.models.sbom import ComponentDriftEvent, PackageComponent, PackageVulnerabilityMatch, SbomImport, VulnerabilityAdvisory  # noqa: F401,E402
 from app.models.security_lab import Asset, AssetTag, AuditLog, CredentialProfile, Network, ScanProfile, ScanScope  # noqa: F401,E402
 from app.models.secret_exposure import SecretAttackPathSignal, SecretExposure, SecretScanImport  # noqa: F401,E402

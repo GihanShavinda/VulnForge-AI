@@ -6,6 +6,7 @@ from app.api.v1.routes.config_assessment import router as config_assessment_rout
 from app.api.v1.routes.discovery import router as discovery_router
 from app.api.v1.routes.enumeration import router as enumeration_router
 from app.api.v1.routes.fingerprinting import router as fingerprinting_router
+from app.api.v1.routes.patch_lifecycle import router as patch_lifecycle_router
 from app.api.v1.routes.sbom import router as sbom_router
 from app.api.v1.routes.security_lab import router as security_lab_router
 from app.api.v1.routes.secret_exposure import router as secret_exposure_router
@@ -20,7 +21,7 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.13.0",
+    version="0.14.0",
     debug=settings.debug,
 )
 
@@ -45,6 +46,7 @@ app.include_router(config_assessment_router, prefix="/api/v1")
 app.include_router(web_assessment_router, prefix="/api/v1")
 app.include_router(tls_assessment_router, prefix="/api/v1")
 app.include_router(secret_exposure_router, prefix="/api/v1")
+app.include_router(patch_lifecycle_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -52,5 +54,5 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
-        "milestone": "V13",
+        "milestone": "V14",
     }
