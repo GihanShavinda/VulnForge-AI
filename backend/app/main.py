@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routes.authenticated_assessment import router as authenticated_assessment_router
+from app.api.v1.routes.config_assessment import router as config_assessment_router
 from app.api.v1.routes.discovery import router as discovery_router
 from app.api.v1.routes.enumeration import router as enumeration_router
 from app.api.v1.routes.fingerprinting import router as fingerprinting_router
@@ -14,7 +15,11 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-app = FastAPI(title=settings.app_name, version="0.9.0", debug=settings.debug)
+app = FastAPI(
+    title=settings.app_name,
+    version="0.10.0",
+    debug=settings.debug,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,8 +38,13 @@ app.include_router(sbom_router, prefix="/api/v1")
 app.include_router(threat_intel_router, prefix="/api/v1")
 app.include_router(weakness_context_router, prefix="/api/v1")
 app.include_router(severity_analysis_router, prefix="/api/v1")
+app.include_router(config_assessment_router, prefix="/api/v1")
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": settings.app_name, "milestone": "V9"}
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "milestone": "V10",
+    }

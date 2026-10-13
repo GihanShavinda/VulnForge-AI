@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.db.base import Base
 from app.models.authenticated_assessment import AuthenticatedEvidence, AuthenticatedScan, CredentialUseAudit  # noqa: F401,E402
+from app.models.config_assessment import BenchmarkProfile, ConfigAssessmentRun, ConfigEvidence, ConfigurationFinding  # noqa: F401,E402
 from app.models.discovery import DiscoveryEvidence, DiscoveryJob, DiscoveredHost  # noqa: F401,E402
 from app.models.enumeration import EnumerationEvidence, EnumerationJob, ExposureFinding, ServiceObservation  # noqa: F401,E402
 from app.models.fingerprinting import FingerprintEvidence, FingerprintJob, Technology, TechnologyObservation  # noqa: F401,E402
@@ -43,7 +44,11 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+        )
         with context.begin_transaction():
             context.run_migrations()
 
