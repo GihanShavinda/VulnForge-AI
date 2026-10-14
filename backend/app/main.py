@@ -11,6 +11,7 @@ from app.api.v1.routes.exploitability import router as exploitability_router
 from app.api.v1.routes.fingerprinting import router as fingerprinting_router
 from app.api.v1.routes.patch_lifecycle import router as patch_lifecycle_router
 from app.api.v1.routes.sbom import router as sbom_router
+from app.api.v1.routes.security_controls import router as security_controls_router
 from app.api.v1.routes.security_lab import router as security_lab_router
 from app.api.v1.routes.secret_exposure import router as secret_exposure_router
 from app.api.v1.routes.severity_analysis import router as severity_analysis_router
@@ -21,12 +22,7 @@ from app.api.v1.routes.web_assessment import router as web_assessment_router
 from app.core.config import get_settings
 
 settings = get_settings()
-
-app = FastAPI(
-    title=settings.app_name,
-    version="0.17.0",
-    debug=settings.debug,
-)
+app = FastAPI(title=settings.app_name, version="0.18.0", debug=settings.debug)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,12 +49,8 @@ app.include_router(patch_lifecycle_router, prefix="/api/v1")
 app.include_router(exploitability_router, prefix="/api/v1")
 app.include_router(attack_graph_router, prefix="/api/v1")
 app.include_router(environmental_risk_router, prefix="/api/v1")
-
+app.include_router(security_controls_router, prefix="/api/v1")
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {
-        "status": "ok",
-        "service": settings.app_name,
-        "milestone": "V17",
-    }
+    return {"status":"ok","service":settings.app_name,"milestone":"V18"}
