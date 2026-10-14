@@ -7,10 +7,14 @@ from app.api.v1.routes.config_assessment import router as config_assessment_rout
 from app.api.v1.routes.discovery import router as discovery_router
 from app.api.v1.routes.enumeration import router as enumeration_router
 from app.api.v1.routes.environmental_risk import router as environmental_risk_router
+from app.api.v1.routes.evaluation import router as evaluation_router
 from app.api.v1.routes.exploitability import router as exploitability_router
+from app.api.v1.routes.final_dashboard import router as final_dashboard_router
+from app.api.v1.routes.final_reports import router as final_reports_router
 from app.api.v1.routes.fingerprinting import router as fingerprinting_router
 from app.api.v1.routes.grounded_analyst import router as grounded_analyst_router
 from app.api.v1.routes.patch_lifecycle import router as patch_lifecycle_router
+from app.api.v1.routes.remediation import router as remediation_router
 from app.api.v1.routes.sbom import router as sbom_router
 from app.api.v1.routes.security_controls import router as security_controls_router
 from app.api.v1.routes.security_lab import router as security_lab_router
@@ -26,7 +30,7 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.19.0",
+    version="1.0.0",
     debug=settings.debug,
 )
 
@@ -57,6 +61,10 @@ app.include_router(attack_graph_router, prefix="/api/v1")
 app.include_router(environmental_risk_router, prefix="/api/v1")
 app.include_router(security_controls_router, prefix="/api/v1")
 app.include_router(grounded_analyst_router, prefix="/api/v1")
+app.include_router(remediation_router, prefix="/api/v1")
+app.include_router(evaluation_router, prefix="/api/v1")
+app.include_router(final_dashboard_router, prefix="/api/v1")
+app.include_router(final_reports_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -64,5 +72,6 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
-        "milestone": "V19",
+        "milestone": "V20",
+        "release": "1.0.0",
     }
