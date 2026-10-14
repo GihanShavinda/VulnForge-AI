@@ -6,6 +6,7 @@ from app.api.v1.routes.authenticated_assessment import router as authenticated_a
 from app.api.v1.routes.config_assessment import router as config_assessment_router
 from app.api.v1.routes.discovery import router as discovery_router
 from app.api.v1.routes.enumeration import router as enumeration_router
+from app.api.v1.routes.environmental_risk import router as environmental_risk_router
 from app.api.v1.routes.exploitability import router as exploitability_router
 from app.api.v1.routes.fingerprinting import router as fingerprinting_router
 from app.api.v1.routes.patch_lifecycle import router as patch_lifecycle_router
@@ -23,7 +24,7 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.16.0",
+    version="0.17.0",
     debug=settings.debug,
 )
 
@@ -51,6 +52,7 @@ app.include_router(secret_exposure_router, prefix="/api/v1")
 app.include_router(patch_lifecycle_router, prefix="/api/v1")
 app.include_router(exploitability_router, prefix="/api/v1")
 app.include_router(attack_graph_router, prefix="/api/v1")
+app.include_router(environmental_risk_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -58,5 +60,5 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
-        "milestone": "V16",
+        "milestone": "V17",
     }
