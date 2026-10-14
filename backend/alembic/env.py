@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.db.base import Base
+from app.models.attack_graph import AttackGraphSyncRun, AttackPathEvidence, AttackPathRecord  # noqa: F401,E402
 from app.models.authenticated_assessment import AuthenticatedEvidence, AuthenticatedScan, CredentialUseAudit  # noqa: F401,E402
 from app.models.config_assessment import BenchmarkProfile, ConfigAssessmentRun, ConfigEvidence, ConfigurationFinding  # noqa: F401,E402
 from app.models.discovery import DiscoveryEvidence, DiscoveryJob, DiscoveredHost  # noqa: F401,E402
@@ -47,10 +48,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     connectable = engine_from_config(
-        config.get_section(
-            config.config_ini_section,
-            {},
-        ),
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -61,7 +59,6 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,
         )
-
         with context.begin_transaction():
             context.run_migrations()
 

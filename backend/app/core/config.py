@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     app_port: int = 8000
     debug: bool = True
 
-    # Database
+    # PostgreSQL
     database_url: str = (
         "postgresql+psycopg://"
         "vulnforge_user:change-me@127.0.0.1:5432/vulnforge"
@@ -64,11 +64,24 @@ class Settings(BaseSettings):
     threat_intel_cache_dir: str = ".cache/threat_intel"
     threat_intel_http_timeout_seconds: int = Field(default=30, ge=5, le=300)
 
-    # V13 — Secret fingerprinting.
-    # Configure this in .env. Never reuse the credential-encryption key.
+    # V13 — Secret fingerprinting
     secret_fingerprint_key: str = Field(
         default="",
         validation_alias="VULNFORGE_SECRET_FINGERPRINT_KEY",
+    )
+
+    # V16 — Native Neo4j attack graph
+    neo4j_uri: str = Field(
+        default="bolt://127.0.0.1:7687",
+        validation_alias="NEO4J_URI",
+    )
+    neo4j_username: str = Field(
+        default="neo4j",
+        validation_alias="NEO4J_USERNAME",
+    )
+    neo4j_password: str = Field(
+        default="",
+        validation_alias="NEO4J_PASSWORD",
     )
 
     @property

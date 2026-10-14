@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.routes.attack_graph import router as attack_graph_router
 from app.api.v1.routes.authenticated_assessment import router as authenticated_assessment_router
 from app.api.v1.routes.config_assessment import router as config_assessment_router
 from app.api.v1.routes.discovery import router as discovery_router
@@ -22,7 +23,7 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.15.0",
+    version="0.16.0",
     debug=settings.debug,
 )
 
@@ -34,66 +35,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    security_lab_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    discovery_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    enumeration_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    fingerprinting_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    authenticated_assessment_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    sbom_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    threat_intel_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    weakness_context_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    severity_analysis_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    config_assessment_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    web_assessment_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    tls_assessment_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    secret_exposure_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    patch_lifecycle_router,
-    prefix="/api/v1",
-)
-app.include_router(
-    exploitability_router,
-    prefix="/api/v1",
-)
+app.include_router(security_lab_router, prefix="/api/v1")
+app.include_router(discovery_router, prefix="/api/v1")
+app.include_router(enumeration_router, prefix="/api/v1")
+app.include_router(fingerprinting_router, prefix="/api/v1")
+app.include_router(authenticated_assessment_router, prefix="/api/v1")
+app.include_router(sbom_router, prefix="/api/v1")
+app.include_router(threat_intel_router, prefix="/api/v1")
+app.include_router(weakness_context_router, prefix="/api/v1")
+app.include_router(severity_analysis_router, prefix="/api/v1")
+app.include_router(config_assessment_router, prefix="/api/v1")
+app.include_router(web_assessment_router, prefix="/api/v1")
+app.include_router(tls_assessment_router, prefix="/api/v1")
+app.include_router(secret_exposure_router, prefix="/api/v1")
+app.include_router(patch_lifecycle_router, prefix="/api/v1")
+app.include_router(exploitability_router, prefix="/api/v1")
+app.include_router(attack_graph_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -101,5 +58,5 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
-        "milestone": "V15",
+        "milestone": "V16",
     }
